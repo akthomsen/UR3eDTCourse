@@ -3,6 +3,8 @@ services:
     container_name: influxdb-server
     image: influxdb
     build: ./
+    volumes:
+      - ./data/:/var/lib/influxdb:rw # Read write access to data collected
     ports:
       - 8086:8086
     networks:
