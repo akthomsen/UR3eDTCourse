@@ -25,7 +25,7 @@ def connect_to_rabbitmq():
         print("  python -m startup.start_docker_rabbitmq")
         raise e # Throw error if server was not connected to
 
-def connect_to_influxdb(token : str = "g_q1cFD4Q3eSe-cvFdRqetoQEsoi2_Socof3rIvspMHQEGmCPcboL4kQVuuGoJmKchWqtEsoNRg4U6P6oL0Xlw=="):
+def connect_to_influxdb(token : str = "nIFNlhkdcuc8p7zn-zR5X0aHrMUhzEKEmcsne4YRugOvoWBTgzpeSl2SsBJp8buZJ-wR9jRXVzL7py6v23_KMw=="):
     # Replace these with your InfluxDB token, organization, and bucket
     org = "ur3e"
     bucket = "ur3e"
@@ -98,7 +98,7 @@ def write_ctrl_msg_to_influxdb(write_api, ctrl_msg):
         .tag("source", "data_recorder_service") \
         .tag("msg_type", ctrl_msg["type"]) \
         .field("msg_type", ctrl_msg["type"]) \
-        .time(datetime.now(timezone.utc), WritePrecision.NS) 
+        .time(datetime.now(timezone.utc)) 
 
 
     def flatten_array_and_add(dp: dict, dp_flat: dict, field: str):
