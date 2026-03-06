@@ -16,4 +16,4 @@ COPY ./DT-solution/DTservices/data_recorder /app/
 # RUN poetry install
 
 # Command to run a script from the volume (this script will be provided by the volume)
-CMD ["python", "/app/data_recorder.py"]
+CMD ["python", "-u", "/app/data_recorder.py"]
