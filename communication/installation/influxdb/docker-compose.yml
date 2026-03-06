@@ -5,3 +5,9 @@ services:
     build: ./
     ports:
       - 8086:8086
+    networks:
+      - shared-communication
+
+networks:
+  shared-communication:
+    external: true
