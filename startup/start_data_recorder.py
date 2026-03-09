@@ -8,7 +8,7 @@ containerName = "data_recorder"
 
 def start_data_recorder():
     logFileName = "logs/data_recorder.log"
-    dockerComposeDirectoryPath = resource_file_path_w_setuptools("DT-solution/DTservices/data_recorder")
+    dockerComposeDirectoryPath = resource_file_path_w_setuptools("DTsolution/DTservices/data_recorder")
     sleepTimeBetweenAttempts = 1
     maxAttempts = 10
 

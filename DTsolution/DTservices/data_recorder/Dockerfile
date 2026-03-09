@@ -10,7 +10,7 @@ COPY ./communication/__init__.py /app/communication/
 COPY ./communication/rabbitmq.py /app/communication/
 COPY ./communication/protocol.py /app/communication/
 
-COPY ./DT-solution/DTservices/data_recorder /app/
+COPY ./DTsolution/DTservices/data_recorder /app/
 # RUN pip install poetry
 # COPY ./pyproject.toml /app/
 # RUN poetry install

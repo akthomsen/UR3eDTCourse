@@ -4,7 +4,7 @@ services:
     image: data_recorder
     build: 
       context: ../../../
-      dockerfile: ./DT-solution/DTservices/data_recorder/Dockerfile
+      dockerfile: ./DTsolution/DTservices/data_recorder/Dockerfile
     networks:
       - shared-communication
 
