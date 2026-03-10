@@ -1,0 +1,7 @@
+"ip": "localhost"
+"port": 5672
+"username": "ur3e"
+"password": "ur3e"
+"exchange": "UR3E_AMQP"
+"type": "topic"
+"vhost": "/"

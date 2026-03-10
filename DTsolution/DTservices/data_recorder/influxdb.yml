@@ -1,0 +1,3 @@
+url: "http://influxdb-server:8086"
+token: "token"
+org: "ur3e"

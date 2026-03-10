@@ -60,6 +60,19 @@ services:
     restart: unless-stopped
     depends_on:
       - rabbitmq
+  data_recorder:
+    container_name: data_recorder
+    build: 
+      context: .
+      dockerfile: DTsolution/DTservices/data_recorder/Dockerfile
+  rt_robot_prediction:
+    container_name: robot_prediction
+    build: 
+      context: .
+      dockerfile: DTsolution/DTservices/RT_robot_prediction/Dockerfile
+    
+
+
 
 networks:
   shared-communication:

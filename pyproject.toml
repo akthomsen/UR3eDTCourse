@@ -19,7 +19,8 @@ spatialmath-python = "==1.1.15"
 pandas = "^2.0.0"
 matplotlib = "==3.10.8"
 docker = "^7.1.0"
-
+influxdb-client = "^1.50.0"
+pyyaml = "^6.0.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
