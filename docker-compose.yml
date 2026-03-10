@@ -43,13 +43,18 @@ services:
       sh -c "rabbitmq-plugins enable --offline rabbitmq_mqtt rabbitmq_federation_management rabbitmq_stomp &&
             docker-entrypoint.sh rabbitmq-server"
     healthcheck:
-      test: ["CMD", "rabbitmqctl", "status"]
-      interval: 5s
-      retries: 5
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
   mockup:
     container_name: ur3e_mockup
-    build: ur3e_mockup
-    platform: linux/amd64
+    build:
+      context: ./ur3e_mockup
+      dockerfile: ${DOCKERFILE:-Dockerfile.x86}
+    volumes:
+      - ./startup/startup.conf:/app/startup.conf:z
     networks:
       - shared-communication
     restart: unless-stopped

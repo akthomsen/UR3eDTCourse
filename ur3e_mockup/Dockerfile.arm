@@ -1,0 +1,7 @@
+FROM --platform=linux/arm64 ubuntu:23.10
+
+WORKDIR /app
+COPY ur3e_mockup_linux_arm64 /app/
+RUN chmod +x ur3e_mockup_linux_arm64
+
+CMD ["./ur3e_mockup_linux_arm64"]
