@@ -14,6 +14,7 @@ class KinematicModel:
         self.current_movement_start_angles = [0] * 6
         self.current_movement_start_time = 0.0 # s
         self.current_movement_duration = 0.0 # s
+        self.moving = False
 
         # Experiment variables
         self.start_time = 0.0
@@ -42,8 +43,12 @@ class KinematicModel:
         # Setup variables for move to be made
         self.commanded_joint_angles = angles
         self.current_movement_start_angles = self.current_joint_angles
-        self.current_movement_start_time = self.time
         self.current_movement_duration = self._determine_movement_duration(self.current_joint_angles, self.commanded_joint_angles)
+
+    def fmi2StartMovement(self):
+        self.moving = True
+        self.current_movement_start_time = self.time
+
 
     def fmi2SetupExperiment(self, start_time: float, stop_time: float):
         self.start_time = start_time
@@ -57,13 +62,15 @@ class KinematicModel:
     def fmi2DoStep(self, current_time: float, step_size: float): 
         self.time = current_time + step_size
 
-        if self.time > self.current_movement_start_time + self.current_movement_duration:
-            self.current_joint_angles = self.commanded_joint_angles
-        else:
-            # Determine how many seconds of movement is done
-            traj_index = int((self.time - self.current_movement_start_time) / self.current_movement_duration * self.movement_fidelity) # index of trajectory
-            traj = rtb.jtraj(np.array(self.current_movement_start_angles), np.array(self.commanded_joint_angles), self.movement_fidelity) # Determine trajectory of movement
-            self.current_joint_angles = traj.q[traj_index, :].tolist()
+        if self.moving:
+            if self.time > self.current_movement_start_time + self.current_movement_duration:
+                self.current_joint_angles = self.commanded_joint_angles
+            else:
+                # Determine how many seconds of movement is done
+                traj_index = int((self.time - self.current_movement_start_time) / self.current_movement_duration * self.movement_fidelity) # index of trajectory
+                traj = rtb.jtraj(np.array(self.current_movement_start_angles), np.array(self.commanded_joint_angles), self.movement_fidelity) # Determine trajectory of movement
+                self.current_joint_angles = traj.q[traj_index, :].tolist()
+                self.moving = False
 
     def fmi2Terminate(self):
         ...
