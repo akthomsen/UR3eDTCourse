@@ -1,0 +1,64 @@
+services:
+  influxdb:
+    container_name: influxdb-server
+    image: influxdb:latest
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ur3e
+      DOCKER_INFLUXDB_INIT_PASSWORD: ur3eur3e
+      DOCKER_INFLUXDB_INIT_ORG: myorg
+      DOCKER_INFLUXDB_INIT_BUCKET: mybucket
+    volumes:
+      - db-data:/var/lib/influxdb:rw
+    ports:
+      - 8086:8086
+    networks:
+      - shared-communication
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: grafana
+    depends_on:
+      - influxdb
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+    volumes:
+      - grafana-data:/var/lib/grafana
+  rabbitmq:
+    container_name: rabbitmq-server
+    image: rabbitmq:3.12-management
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: ur3e
+      RABBITMQ_DEFAULT_PASS: ur3e
+    ports:
+      - 5672:5672
+      - 15672:15672
+      - 1883:1883
+    networks:
+      - shared-communication
+    command: >
+      sh -c "rabbitmq-plugins enable --offline rabbitmq_mqtt rabbitmq_federation_management rabbitmq_stomp &&
+            docker-entrypoint.sh rabbitmq-server"
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 5s
+      retries: 5
+  mockup:
+    container_name: ur3e_mockup
+    build: ur3e_mockup
+    platform: linux/amd64
+    networks:
+      - shared-communication
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+
+networks:
+  shared-communication:
+
+volumes:
+  db-data:
+  grafana-data:
