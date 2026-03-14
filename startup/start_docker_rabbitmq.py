@@ -5,6 +5,10 @@ from startup.utils.docker_service_starter import kill_container, start
 
 containerName = "rabbitmq-server"
 
+# To fix file name and function name overlap
+def start_rabbitmq():
+    start_docker_rabbitmq()
+
 
 def start_docker_rabbitmq():
     logFileName = "logs/rabbitmq.log"
