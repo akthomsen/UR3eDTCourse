@@ -43,12 +43,12 @@ threading.Thread(
     daemon=True
 ).start()
 
-ur3e_service = UR3eService()
+simulation_service = SimulationService()
 
 q_end = [0.0, -pi/2, pi/2, -pi/2, -pi/2, 0.0] # From exercise class
 max_velocity = 60 # deg/s
 acceleration = 80 # deg/s²
 
-ur3e_service.load_program(q_end, max_velocity, acceleration)
-ur3e_service.play()
+simulation_service.load_program(q_end, max_velocity, acceleration)
+simulation_service.play()
  

@@ -6,7 +6,6 @@ from .rabbitmq import *
 
 class RabbitMQFactory:
     def __init__(self):
-        print("Initializing factory")
         pass
 
     def create_rabbitmq(self) -> Rabbitmq:

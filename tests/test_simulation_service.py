@@ -14,7 +14,7 @@ pi = np.pi
 q_start = [0.0, -pi/2, pi/2, -pi/2, -pi/2, 0.0] # From exercise class. Upright with joints tucked a bit
 q_end = [0.0, -pi/2, pi/2, -pi/2, -pi/1, 0.0] # Move 5th joint a bit
 
-simulation_service = SimulationService()
+simulation_service = SimulationService(should_publish_to_rabbitmq=False)
 simulation_service.set_start_pos(q_start)
 
 max_velocity = 60 # deg/s
@@ -37,4 +37,4 @@ plt.title("Robot joint velocity over time")
 plt.xlabel("Time")
 plt.ylabel("Value")
 plt.legend() # Show the labels
-plt.show()
+plt.savefig("resources/test_simulation_service.png") # When running from project root dir

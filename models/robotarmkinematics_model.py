@@ -19,10 +19,10 @@ class RobotArmKinematicsModel:
         self.current_a: list[float] = np.array([0, 0, 0, 0, 0, 0]) # Current acceleration deg/s^2
         self.trajectory: Trajectory = None
     
-    def set_start_pos(self, q_start: list[float]):
+    def set_start_position(self, q_start: list[float]):
         self.q_start = q_start
     
-    def set_end_pos(self, q_end: list[float]) -> None:
+    def set_end_position(self, q_end: list[float]) -> None:
         self.q_end = q_end
     
     # Max velocity is given in deg/s. One value given for all joints
@@ -33,7 +33,7 @@ class RobotArmKinematicsModel:
     def set_max_acceleration(self, acceleration: float) -> None:
         self.acceleration = acceleration
     
-    def get_start_pos(self) -> list[float]:
+    def get_start_position(self) -> list[float]:
         return self.q_start
     
     def get_current_position(self) -> list[float]:

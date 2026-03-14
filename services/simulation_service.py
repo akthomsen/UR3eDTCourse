@@ -11,8 +11,8 @@ from utils.constants import step_size
 from utils.data_class import RobotData
 
 class SimulationService:
-    def __init__(self, should_publish_to_rabbitmq: bool = False):
-        self.robot_arm_kinematics_model = RobotArmKinematicsModel()
+    def __init__(self, should_publish_to_rabbitmq: bool = True):
+        self.robotarmkinematics_model = RobotArmKinematicsModel()
         self.controller_model = ControllerModel()
         self.fault_after_n_steps: int = -1
         self.pause_after_n_steps: int = -1
@@ -29,7 +29,7 @@ class SimulationService:
             self.rabbitmq.connect_to_server() # Method already contains try catch clause
         
     def set_start_pos(self, q_start: list[float]) -> None:
-        self.robot_arm_kinematics_model.set_start_pos(q_start)
+        self.robotarmkinematics_model.set_start_position(q_start)
 
     # Set a fault to happen after n steps
     def set_fault(self, n_steps: int, fault_type: str) -> None:
@@ -64,12 +64,12 @@ class SimulationService:
         self.controller_model.load_program(q_end, max_velocity, acceleration)
 
         # Set the values in the robot arm model
-        self.robotarmkinematics_model.set_end_pos(q_end)
+        self.robotarmkinematics_model.set_end_position(q_end)
         self.robotarmkinematics_model.set_max_velocity(max_velocity)
-        self.robotarmkinematics_model.set_acceleration(acceleration)
+        self.robotarmkinematics_model.set_max_acceleration(acceleration)
 
         # Get the current positions of the robot arm model
-        q_start: list[float] = self.robot_arm_kinematics_model.get_current_pos()
+        q_start: list[float] = self.robotarmkinematics_model.get_current_position()
 
         # Calculate the amount of steps necessary 
         n_steps = compute_steps(q_start, q_end, max_velocity, acceleration, step_size)
@@ -79,17 +79,13 @@ class SimulationService:
         self.robotarmkinematics_model.do_calculations(n_steps)
 
     def reset_results(self):
-        self.q_actual = []
-        self.qd_actual = []
-        self.time_stamp = []
-        self.tcp_pose = []
+        self.robot_data.reset()
 
     def get_results(self) -> RobotData:
-        return RobotData(self.q_actual, self.qd_actual, self.time_stamp, self.tcp_pose)
+        return self.robot_data
     
     # Start the loaded program
     def play(self) -> None:
-        self.robot_arm_kinematics_model.state = "Running"
         self.controller_model.play() # Immitate calling play on the controller
         
         while self.step_counter < self.n_steps:
@@ -98,7 +94,7 @@ class SimulationService:
                 self.controller_model.pause()
 
             # Get the current position of the robot arm and give to the controller
-            q_actual: list[float] = self.robot_arm_kinematics_model.get_current_pos()
+            q_actual: list[float] = self.robotarmkinematics_model.get_current_position()
             self.controller_model.set_current_pos(q_actual)
             
             # Step the controller
@@ -106,13 +102,13 @@ class SimulationService:
 
             # Add relevant values to the robot data instance in this class
             # The RobotData instance can be fetched when a simulation is done
-            self.robot_data.add_q_actual(self.robot_arm_kinematics_model.get_current_position())
-            self.robot_data.add_qd_actual(self.robot_arm_kinematics_model.get_current_velocity())
+            self.robot_data.add_q_actual(self.robotarmkinematics_model.get_current_position())
+            self.robot_data.add_qd_actual(self.robotarmkinematics_model.get_current_velocity())
             self.robot_data.add_time_stamp(self.step_counter * step_size)
             self.robot_data.add_tcp_pose(self.controller_model.get_current_tcp_pose())
 
             # Step the robot arm model
-            self.robot_arm_kinematics_model.do_step(self.step_counter) # step counter needed for fetching trajectory results
+            self.robotarmkinematics_model.do_step(self.step_counter) # step counter needed for fetching trajectory results
 
             # Publish to rabbitmq if enabled
             if self.should_publish_to_rabbitmq:
