@@ -1,0 +1,97 @@
+import numpy as np
+from spatialmath import SE3
+import json
+from utils.constants import step_size
+from communication.protocol import RobotArmStateKeys
+
+# robot[RobotArmStateKeys.ROBOT_MODE]
+def convert_to_standard_types(robot: RobotArmStateKeys):
+    new_robot: RobotArmStateKeys = RobotArmStateKeys()
+    new_robot.ROBOT_MODE = robot.ROBOT_MODE
+    print("timestamp", robot.TIMESTAMP)
+    new_robot.Q_ACTUAL = robot.Q_ACTUAL[0]
+    new_robot.QD_ACTUAL = robot.QD_ACTUAL[0]
+    new_robot.Q_TARGET = robot.Q_TARGET
+    new_robot.TIMESTAMP = robot.TIMESTAMP[0]
+    new_robot.JOINT_MAX_SPEED = robot.JOINT_MAX_SPEED
+    new_robot.JOINT_MAX_ACCELERATION = robot.JOINT_MAX_ACCELERATION
+    new_robot.TCP_POSE = robot.TCP_POSE
+
+    return new_robot 
+
+def compute_time(q_start, q_end, v_max_deg, a_max_deg, dt):
+    """
+    Positions: radians
+    Velocity: deg/s
+    Acceleration: deg/s^2
+    """
+
+    q_start = np.array(q_start)
+    q_end   = np.array(q_end)
+
+    # Convert velocity and acceleration to radians
+    v_max = np.deg2rad(v_max_deg)
+    a_max = np.deg2rad(a_max_deg)
+
+    T_all = []
+
+    for i in range(len(q_start)):
+        delta_q = abs(q_end[i] - q_start[i])  # already radians
+
+        t_acc = v_max / a_max
+        q_acc = step_size * a_max * t_acc**2
+        q_acc_total = 2 * q_acc
+
+        if delta_q > q_acc_total:
+            # Trapezoidal profile
+            q_const = delta_q - q_acc_total
+            t_const = q_const / v_max
+            T_i = 2 * t_acc + t_const
+        else:
+            # Triangular profile
+            T_i = 2 * np.sqrt(delta_q / a_max)
+
+        T_all.append(T_i)
+
+    T_total = max(T_all)
+
+    return T_total
+
+def compute_steps(q_start, q_end, v_max_deg, a_max_deg, dt):
+    """
+    Positions: radians
+    Velocity: deg/s
+    Acceleration: deg/s^2
+    """
+
+    q_start = np.array(q_start)
+    q_end   = np.array(q_end)
+
+    # Convert velocity and acceleration to radians
+    v_max = np.deg2rad(v_max_deg)
+    a_max = np.deg2rad(a_max_deg)
+
+    T_all = []
+
+    for i in range(len(q_start)):
+        delta_q = abs(q_end[i] - q_start[i])
+
+        t_acc = v_max / a_max
+        q_acc = 0.5 * a_max * t_acc**2
+        q_acc_total = 2 * q_acc
+
+        if delta_q > q_acc_total:
+            # Trapezoidal profile
+            q_const = delta_q - q_acc_total
+            t_const = q_const / v_max
+            T_i = 2 * t_acc + t_const
+        else:
+            # Triangular profile
+            T_i = 2 * np.sqrt(delta_q / a_max)
+
+        T_all.append(T_i)
+
+    T_total = max(T_all)
+    n_steps = int(np.ceil(T_total / dt))
+
+    return n_steps
