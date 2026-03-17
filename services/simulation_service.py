@@ -71,6 +71,7 @@ if __name__ == "__main__":
 
     try:
         sim_service.setup()
+        #put this on another thread
         sim_service.rabbitmq.start_consuming()
         while True:
             if time.time() - sim_service.time >= sim_service.step_size:
