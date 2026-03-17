@@ -18,9 +18,7 @@ logger = logging.getLogger("simulation_service")
 
 def start_sim_service(ok_queue=None):
     sim_service = SimulationService(time.time())
-    #setup model
-    
-
+  
     sim_service.setup()
     if ok_queue is not None:
         ok_queue.put("OK")

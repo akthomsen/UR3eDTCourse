@@ -4,7 +4,6 @@ import logging
 import math
 import threading
 from models.robot_model import RobotModel
-import communication.protocol as protocol
 from communication.rabbitmq import Rabbitmq, MODEL_ROUTING_KEY_STATE, ROUTING_KEY_CTRL, RobotArmStateKeys, CtrlMsgFields, CtrlMsgKeys
 from communication.factory import RabbitMQFactory
 from startup.utils.config import load_config_w_setuptools; c=load_config_w_setuptools('startup.conf');
@@ -35,7 +34,7 @@ class SimulationService:
             RobotArmStateKeys.TIMESTAMP: self.time,
             RobotArmStateKeys.JOINT_MAX_SPEED: self.robot_model.max_velocity,
             RobotArmStateKeys.JOINT_MAX_ACCELERATION: self.robot_model.max_acceleration,
-            RobotArmStateKeys.TCP_POSE: self.robot_model.get_tcp_pose_current().t
+            RobotArmStateKeys.TCP_POSE: self.robot_model.get_tcp_pose_current().t.tolist()
         }
         self.publisher.send_message(routing_key=MODEL_ROUTING_KEY_STATE, message=data)
         
@@ -66,7 +65,8 @@ class SimulationService:
         self.robot_model.step(self.time)
     
     def setup(self):
-
+        print(c.get("digital_twin.robot_model.initial_q"))
+        self.robot_model.set_q_current(np.array(c.get("digital_twin.robot_model.initial_q", [0.0,0.0,0.0,0.0,0.0,0.0])))
         self.publisher.connect_to_server()
         self.consumer.connect_to_server()
         self.consumer.subscribe(routing_key=ROUTING_KEY_CTRL,
