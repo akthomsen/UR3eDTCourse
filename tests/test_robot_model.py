@@ -4,7 +4,7 @@ import numpy as np
 SIM_DURATION = 3.0  # seconds
 STEP_SIZE = 0.001
 
-model = robot_model.RobotModel(step_size=STEP_SIZE, start_time=0.0)
+model = robot_model.RobotModel(step_size=STEP_SIZE)
 
 end_q = np.array([2, -0.5, 3.2, -3, -2, 1.5]) # Target joint positions in radians
 model.load_program(end_q, max_velocity=np.pi, acceleration=np.pi)
