@@ -5,6 +5,7 @@ from communication.rabbitmq import Rabbitmq
 from communication.protocol import ROUTING_KEY_RECORDER
 from communication.factory import RabbitMQFactory
 from influxdb_client.client.write.point import Point
+import threading
 
 class DBRecorderService:
     def __init__(self):
@@ -18,7 +19,7 @@ class DBRecorderService:
                 # --- STATE MESSAGE ---
         if "q_actual" in msg:
             self.write_state(msg)
-            
+
         # --- UNKNOWN ---
         else:
             print("Unknown message format:", msg)
@@ -78,10 +79,14 @@ class DBRecorderService:
         self.influxdb_bucket = influxdb_config["bucket"]
 
         self.rabbitmq.subscribe(routing_key=ROUTING_KEY_RECORDER,
-                           on_message_callback=self.read_record_request)
+                        on_message_callback=self.read_record_request)
 
     def start_recording(self):
         try:
-            self.rabbitmq.start_consuming()
+            def run():
+                self.rabbitmq.start_consuming()
+
+            self.thread = threading.Thread(target=run, daemon=True)
+            self.thread.start()
         except KeyboardInterrupt:
             self.rabbitmq.close()
