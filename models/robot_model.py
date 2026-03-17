@@ -5,7 +5,7 @@ import communication.protocol as protocol
 from communication.protocol import RobotMode
 
 class RobotModel:
-    def __init__(self, step_size: float = 0.01, start_time: float = 0.0):
+    def __init__(self, step_size: float = 0.01):
         self.q_current = np.zeros(6) 
         self.qd_current = np.zeros(6)
         self.qdd_current = np.zeros(6)
@@ -20,7 +20,6 @@ class RobotModel:
 
         self.state = RobotMode.ROBOT_MODE_IDLE
         self.step_size = step_size
-        self.start_time = start_time
         self.current_traj_index = 0
     
     def set_q_current(self, q_current: np.ndarray):
