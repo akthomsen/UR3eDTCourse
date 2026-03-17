@@ -4,21 +4,6 @@ import json
 from utils.constants import step_size
 from communication.protocol import RobotArmStateKeys
 
-# robot[RobotArmStateKeys.ROBOT_MODE]
-def convert_to_standard_types(robot: RobotArmStateKeys):
-    new_robot: RobotArmStateKeys = RobotArmStateKeys()
-    new_robot.ROBOT_MODE = robot.ROBOT_MODE
-    print("timestamp", robot.TIMESTAMP)
-    new_robot.Q_ACTUAL = robot.Q_ACTUAL[0]
-    new_robot.QD_ACTUAL = robot.QD_ACTUAL[0]
-    new_robot.Q_TARGET = robot.Q_TARGET
-    new_robot.TIMESTAMP = robot.TIMESTAMP[0]
-    new_robot.JOINT_MAX_SPEED = robot.JOINT_MAX_SPEED
-    new_robot.JOINT_MAX_ACCELERATION = robot.JOINT_MAX_ACCELERATION
-    new_robot.TCP_POSE = robot.TCP_POSE
-
-    return new_robot 
-
 def compute_time(q_start, q_end, v_max_deg, a_max_deg, dt):
     """
     Positions: radians
@@ -57,19 +42,12 @@ def compute_time(q_start, q_end, v_max_deg, a_max_deg, dt):
 
     return T_total
 
-def compute_steps(q_start, q_end, v_max_deg, a_max_deg, dt):
+def compute_steps(q_start: np.ndarray, q_end: np.ndarray, v_max: float, a_max: float, dt: float):
     """
     Positions: radians
     Velocity: deg/s
     Acceleration: deg/s^2
     """
-
-    q_start = np.array(q_start)
-    q_end   = np.array(q_end)
-
-    # Convert velocity and acceleration to radians
-    v_max = np.deg2rad(v_max_deg)
-    a_max = np.deg2rad(a_max_deg)
 
     T_all = []
 
@@ -95,3 +73,10 @@ def compute_steps(q_start, q_end, v_max_deg, a_max_deg, dt):
     n_steps = int(np.ceil(T_total / dt))
 
     return n_steps
+
+
+def compute_stop_q_end(q_start, v_current, a_max):
+    stop_dist = 0.5 * (v_current ** 2) / a_max
+    q_end = q_start + stop_dist * np.sign(v_current)
+
+    return q_end
