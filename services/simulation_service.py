@@ -1,24 +1,30 @@
 import numpy as np
-import math
+import time
 import logging
+import math
+import threading
 from models.robot_model import RobotModel
 import communication.protocol as protocol
 from communication.rabbitmq import Rabbitmq, MODEL_ROUTING_KEY_STATE, ROUTING_KEY_CTRL, RobotArmStateKeys, CtrlMsgFields, CtrlMsgKeys
 from communication.factory import RabbitMQFactory
+from startup.utils.logging_config import config_logging
 
 class SimulationService:
     def __init__(self, start_time: float = 0.0, step_size: float = 0.01):
         self.robot_model = RobotModel(start_time=start_time, step_size=step_size)
-        self.rabbitmq: Rabbitmq = RabbitMQFactory.create_rabbitmq()
+        self.consumer: Rabbitmq = RabbitMQFactory.create_rabbitmq()
+        self.publisher: Rabbitmq = RabbitMQFactory.create_rabbitmq()
         self.time = start_time
         self.step_size = step_size
 
         self._l = logging.getLogger("SimulationService")
     
     def cleanup(self):
-        self.rabbitmq.close()
+        self.consumer.close()
+        self.publisher.close()
 
     def upload_state(self):
+        self._l.info("Uploading state to RabbitMQ.")
         data = {
             RobotArmStateKeys.ROBOT_MODE: self.robot_model.state,
             RobotArmStateKeys.Q_ACTUAL: self.robot_model.get_q_current().tolist(),
@@ -29,7 +35,7 @@ class SimulationService:
             RobotArmStateKeys.JOINT_MAX_ACCELERATION: self.robot_model.max_acceleration,
             RobotArmStateKeys.TCP_POSE: self.robot_model.get_current_tcp_pose().tolist()
         }
-        self.rabbitmq.send_message(routing_key=MODEL_ROUTING_KEY_STATE, message=data)
+        self.publisher.send_message(routing_key=MODEL_ROUTING_KEY_STATE, message=data)
         
     def load_program(self, q_end: np.ndarray, max_velocity: float, acceleration: float) -> None:
         # Set the values in the robot model
@@ -58,30 +64,50 @@ class SimulationService:
         self.robot_model.step(self.time)
     
     def setup(self):
-        self.rabbitmq.connect_to_server()
-        self.rabbitmq.subscribe(routing_key=ROUTING_KEY_CTRL,
+        self.publisher.connect_to_server()
+        self.consumer.connect_to_server()
+        self.consumer.subscribe(routing_key=ROUTING_KEY_CTRL,
                                 on_message_callback=self.read_control_message)
 
 if __name__ == "__main__":
-    import time
     from startup.utils.config import load_config_w_setuptools; c=load_config_w_setuptools('startup.conf');
-    sim_service = SimulationService(time.time(), c.get("step_size", 0.01))
-    #setup model
-    publish_period = c.get("publish_period", 0.05)
+    import os
+    # Configure logging
+    log_dir = os.path.join(os.path.dirname(__file__), "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "simulation_service.log")
+    config_logging(filename=log_file, level=logging.INFO)
 
-    try:
-        sim_service.setup()
-        #put this on another thread
-        sim_service.rabbitmq.start_consuming()
-        while True:
+    logger = logging.getLogger("simulation_service")
+    sim_service = SimulationService(time.time(), c.get("digital_twin.robot_model.step_size", 0.01))
+    #setup model
+    publish_period = c.get("digital_twin.robot_model.publish_period", 0.05)
+
+    sim_service.setup()
+
+    stop_event = threading.Event()
+
+    def sim_loop():
+        last_publish_time = time.time()
+        while not stop_event.is_set():
             if time.time() - sim_service.time >= sim_service.step_size:
                 sim_service.step_simulation()
+
+            if time.time() - last_publish_time >= publish_period:
                 sim_service.upload_state()
-            if time.time() - sim_service.time >= publish_period:
-                sim_service.upload_state()
+                last_publish_time = time.time()
+
+            time.sleep(0.001)
+
+    sim_thread = threading.Thread(target=sim_loop, daemon=True)
+    sim_thread.start()
+
+    try:
+        sim_service.consumer.start_consuming()
     except KeyboardInterrupt:
         sim_service._l.info("Simulation stopped by user.")
     finally:
+        stop_event.set()
         sim_service.cleanup()
 
 #make a startup script
