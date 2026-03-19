@@ -1,10 +1,11 @@
 import numpy as np
 import time
+from datetime import datetime, timezone
 import logging
 import math
 import threading
 from models.robot_model import RobotModel
-from communication.rabbitmq import Rabbitmq, MODEL_ROUTING_KEY_STATE, ROUTING_KEY_CTRL, RobotArmStateKeys, CtrlMsgFields, CtrlMsgKeys
+from communication.rabbitmq import Rabbitmq, ROUTING_KEY_MODEL_STATE, ROUTING_KEY_CTRL, ROUTING_KEY_RECORDER, RobotArmStateKeys, CtrlMsgFields, CtrlMsgKeys
 from communication.factory import RabbitMQFactory
 from startup.utils.config import load_config_w_setuptools; c=load_config_w_setuptools('startup.conf');
 
@@ -25,18 +26,46 @@ class SimulationService:
         self.publisher.close()
 
     def upload_state(self):
-        self._l.info("Uploading state to RabbitMQ.")
-        data = {
+        self._l.debug("Uploading state to RabbitMQ.")
+        # InfluxDB expects the timestamp to be either a datetime (tz-aware) or integer nanoseconds.
+        # Use an RFC3339-aware timestamp so it can be parsed by the InfluxDB client.
+        timestamp = datetime.fromtimestamp(self.time, timezone.utc).isoformat()
+
+        fields = {
+            RobotArmStateKeys.ROBOT_MODE: self.robot_model.state,
+            RobotArmStateKeys.JOINT_MAX_SPEED: self.robot_model.max_velocity,
+            RobotArmStateKeys.JOINT_MAX_ACCELERATION: self.robot_model.max_acceleration,
+        }
+
+        # Expand list-valued signals into individual numeric fields for InfluxDB
+        # (InfluxDB field values must be scalar, not dict/list).
+        fields.update(unroll_list(RobotArmStateKeys.Q_ACTUAL, self.robot_model.get_q_current().tolist()))
+        fields.update(unroll_list(RobotArmStateKeys.QD_ACTUAL, self.robot_model.get_qd_current().tolist()))
+        fields.update(unroll_list(RobotArmStateKeys.Q_TARGET, self.robot_model.get_q_end().tolist()))
+        fields.update(unroll_list(RobotArmStateKeys.TCP_POSE, self.robot_model.get_tcp_pose_current().t.tolist()))
+
+        rdata = {
+            "measurement": "simulation_state",
+            "time": timestamp,
+            "tags": {
+                "source": "simulator_service"
+            },
+            "fields": fields,
+        }
+        
+        mdata = {
             RobotArmStateKeys.ROBOT_MODE: self.robot_model.state,
             RobotArmStateKeys.Q_ACTUAL: self.robot_model.get_q_current().tolist(),
             RobotArmStateKeys.QD_ACTUAL: self.robot_model.get_qd_current().tolist(),
             RobotArmStateKeys.Q_TARGET: self.robot_model.q_end.tolist(),
-            RobotArmStateKeys.TIMESTAMP: self.time,
+            RobotArmStateKeys.TIMESTAMP: timestamp,
             RobotArmStateKeys.JOINT_MAX_SPEED: self.robot_model.max_velocity,
             RobotArmStateKeys.JOINT_MAX_ACCELERATION: self.robot_model.max_acceleration,
             RobotArmStateKeys.TCP_POSE: self.robot_model.get_tcp_pose_current().t.tolist()
-        }
-        self.publisher.send_message(routing_key=MODEL_ROUTING_KEY_STATE, message=data)
+            }
+        self.publisher.send_message("robotarm.recorder.arm_state", rdata)
+        self.publisher.send_message(ROUTING_KEY_MODEL_STATE, mdata)
+        
         
     def load_program(self, q_end: np.ndarray, max_velocity: float, acceleration: float) -> None:
         # Set the values in the robot model
@@ -78,12 +107,13 @@ class SimulationService:
         def _sim_loop():
             last_publish_time = time.time()
             while not stop_event.is_set():
-                if time.time() - self.time >= self.step_size:
+                curr_time = time.time()
+                if curr_time - self.time >= self.step_size:
                     self.step_simulation()
 
-                if time.time() - last_publish_time >= self.publish_period:
+                if curr_time - last_publish_time >= self.publish_period:
                     self.upload_state()
-                    last_publish_time = time.time()
+                    last_publish_time = curr_time
 
                 time.sleep(0.001)
 
@@ -97,3 +127,9 @@ class SimulationService:
         finally:
             stop_event.set()
             self.cleanup()
+
+def unroll_list(key_prefix, values):
+    return {
+        f"{key_prefix}_{i}": v
+        for i, v in enumerate(values)
+    }
