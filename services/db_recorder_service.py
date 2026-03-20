@@ -4,7 +4,6 @@ from communication.protocol import ROUTING_KEY_RECORDER
 from communication.factory import RabbitMQFactory
 from startup.utils.logging_config import create_service_logger
 import threading
-import logging
 
 class DBRecorderService:
     def __init__(self):

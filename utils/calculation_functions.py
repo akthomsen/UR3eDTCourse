@@ -1,7 +1,6 @@
 import numpy as np
 from spatialmath import SE3
 import json
-from utils.constants import step_size
 from communication.protocol import RobotArmStateKeys
 
 def compute_time(q_start, q_end, v_max_deg, a_max_deg, dt):
@@ -24,7 +23,7 @@ def compute_time(q_start, q_end, v_max_deg, a_max_deg, dt):
         delta_q = abs(q_end[i] - q_start[i])  # already radians
 
         t_acc = v_max / a_max
-        q_acc = step_size * a_max * t_acc**2
+        q_acc = dt * a_max * t_acc**2
         q_acc_total = 2 * q_acc
 
         if delta_q > q_acc_total:

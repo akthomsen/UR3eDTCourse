@@ -3,7 +3,6 @@ import roboticstoolbox as rtb
 import utils.calculation_functions as calc
 import communication.protocol as protocol
 from communication.protocol import RobotMode
-from utils.constants import pi, zero
 import spatialmath as spm
 
 class RobotModel:
@@ -32,7 +31,7 @@ class RobotModel:
         a = [0, -0.24365, -0.21325, 0, 0, 0]
         d = [0.1519, 0, 0, 0.11235, 0.08535, 0.0819]
 
-        alpha = [pi / 2, zero, zero, pi / 2, -pi / 2, zero]
+        alpha = [np.pi / 2, 0.0, 0.0, np.pi / 2, -np.pi / 2, 0.0]
 
         # mass data, no inertia available
         mass = [2, 3.42, 1.26, 0.8, 0.8, 0.35]
@@ -118,8 +117,8 @@ class RobotModel:
 
     def clear_program(self):
         self.q_end = np.zeros(6)
-        self.max_velocity = 0
-        self.max_acceleration = 0
+        self.max_velocity = 0.0
+        self.max_acceleration = 0.0
         self.trajectory = None
 
     def set_halt_traj(self):

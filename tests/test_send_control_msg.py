@@ -4,7 +4,7 @@ import numpy as np
 
 # Construct control message for loading a program
 client = RabbitMQFactory.create_rabbitmq()
-position = [0.0, -np.pi/2, np.pi/2, -np.pi/1, -np.pi/2, 0.0]
+position = [3.0,2.0,1.0,-1.0,-2.0,-3.0]
 vel = 60 # deg/s
 acc = 80 # deg/s²
 

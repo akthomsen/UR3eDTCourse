@@ -7,7 +7,7 @@ from startup.start_docker_influxdb import start_docker_influxdb
 from startup.utils.logging_config import setup_root_logging
 
 if __name__ == "__main__":
-    setup_root_logging("root_logs")
+    setup_root_logging("all_service_logs")
     start_docker_rabbitmq()
     start_docker_influxdb()
     start_as_daemon(start_robot_arm_mockup)
