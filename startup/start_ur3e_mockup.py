@@ -6,16 +6,9 @@ import subprocess
 import os
 import platform
 import logging
-from startup.utils.logging_config import config_logging
+from startup.utils.logging_config import create_service_logger
 
-# Configure logging
-log_dir = os.path.join(os.path.dirname(__file__), "logs")
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, "ur3e_mockup.log")
-config_logging(filename=log_file, level=logging.INFO)
-
-logger = logging.getLogger("start_ur3e_mockup")
-
+logger = create_service_logger("start_ur3e_mockup")
 
 def _get_executable_path(system, machine):
     """

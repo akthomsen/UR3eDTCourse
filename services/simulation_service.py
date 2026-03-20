@@ -8,6 +8,7 @@ from models.robot_model import RobotModel
 from communication.rabbitmq import Rabbitmq, ROUTING_KEY_MODEL_STATE, ROUTING_KEY_CTRL, ROUTING_KEY_RECORDER, RobotArmStateKeys, CtrlMsgFields, CtrlMsgKeys
 from communication.factory import RabbitMQFactory
 from startup.utils.config import load_config_w_setuptools; c=load_config_w_setuptools('startup.conf');
+from startup.utils.logging_config import create_service_logger
 
 class SimulationService:
     def __init__(self, start_time: float = 0.0):
@@ -19,7 +20,7 @@ class SimulationService:
         self.publisher: Rabbitmq = RabbitMQFactory.create_rabbitmq()
         self.time = start_time
         
-        self._l = logging.getLogger("SimulationService")
+        self._l = create_service_logger("simulation_service")
     
     def cleanup(self):
         self.consumer.close()

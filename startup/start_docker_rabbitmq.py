@@ -2,6 +2,7 @@ import requests
 
 from startup.utils.config import resource_file_path_w_setuptools
 from startup.utils.docker_service_starter import kill_container, start
+from startup.utils.logging_config import LOG_DIR_PATH
 
 containerName = "rabbitmq-server"
 
@@ -11,7 +12,7 @@ def start_rabbitmq():
 
 
 def start_docker_rabbitmq():
-    logFileName = "logs/rabbitmq.log"
+    logFileName = LOG_DIR_PATH + "rabbitmq.log"
     dockerComposeDirectoryPath = resource_file_path_w_setuptools("communication/installation")
     sleepTimeBetweenAttempts = 1
     maxAttempts = 10

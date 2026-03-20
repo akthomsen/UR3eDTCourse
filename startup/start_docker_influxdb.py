@@ -3,12 +3,13 @@ from startup.utils import docker_service_starter as ds
 import requests
 
 from startup.utils.docker_service_starter import kill_container
+from startup.utils.logging_config import LOG_DIR_PATH
 
 containerName = "influxdb-server"
 
 
 def start_docker_influxdb():
-    logFileName = "logs/influxdb.log"
+    logFileName = LOG_DIR_PATH + "influxdb.log"
     dockerComposeDirectoryPath = resource_file_path("influxdbserver")
     sleepTimeBetweenAttempts = 1
     maxAttempts = 10
